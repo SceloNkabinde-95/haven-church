@@ -1,0 +1,44 @@
+name: Publish public design preview
+
+on:
+  push:
+    branches: [CHATGPT]
+    paths:
+      - index.html
+      - favicon.svg
+      - .github/workflows/pages-preview.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: haven-pages-preview
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/CHATGPT'
+    name: Publish static demo
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Prepare public preview only
+        run: |
+          mkdir -p _site
+          cp index.html favicon.svg _site/
+          touch _site/.nojekyll
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
